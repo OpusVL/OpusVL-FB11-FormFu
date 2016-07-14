@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package OpusVL::FB11::FormFu;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 1;
 

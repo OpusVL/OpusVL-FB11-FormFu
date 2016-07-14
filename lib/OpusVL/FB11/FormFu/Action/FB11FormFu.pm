@@ -55,6 +55,7 @@ sub execute
         # .. load it..
         $self->load_config_file ( $c, $form, $form_file );
         my $new_formfu = $form->can('auto_container_comment_class');
+        $form->auto_container_error_class('has-error');
         if($c->config->{old_formfu_classes})
         {
             # I can't really see why you'd need this in our new Bootstrap'd world...

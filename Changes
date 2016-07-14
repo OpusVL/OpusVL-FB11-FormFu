@@ -2,6 +2,10 @@ Changes for OpusVL-FB11-FormFu
 
 {{ $NEXT }}
 
+0.02      2016-07-14 15:17:25+01:00 Europe/London
+
+  - Added bootstrap error css class by default.
+
 0.01      2016-07-01 15:54:43+01:00 Europe/London
 
   - First version.

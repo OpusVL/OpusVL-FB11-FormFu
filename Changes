@@ -2,6 +2,10 @@ Changes for OpusVL-FB11-FormFu
 
 {{ $NEXT }}
 
+0.03      2018-06-13 15:37:34+01:00 Europe/London
+
+  - I found a constraint called AppKitPassword and apparently we need it
+
 0.02      2016-07-14 15:17:25+01:00 Europe/London
 
   - Added bootstrap error css class by default.

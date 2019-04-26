@@ -1,6 +1,8 @@
 package OpusVL::FB11::FormFu::RoleFor::Controller;
 
 use Moose::Role;
+use File::ShareDir qw/module_dir/;
+use Try::Tiny;
 
 before create_action => sub {
     my ($self, %args) = @_;
@@ -8,6 +10,30 @@ before create_action => sub {
     if ( defined $args{attributes}{FB11Form} ) {
         push @{ $args{attributes}{ActionClass} }, "OpusVL::FB11::FormFu::Action::FB11FormFu";
     }
+};
+
+after COMPONENT => sub {
+    my ($class, $app, $args) = @_;
+    $args = $class->merge_config_hashes($args, $class->config);
+
+    try {
+        my $module_dir = module_dir($class);
+        push @{$app->config->{'Controller::HTML::FormFu'}->{constructor}->{config_file_path}},
+            $module_dir . '/root/forms';
+    }
+    catch {
+        $app->log->debug("No module_dir for $class");
+    };
+
+    my $real_module = $args->{fb11_myclass} or return;
+    try {
+        my $module_dir = module_dir($real_module);
+        push @{$app->config->{'Controller::HTML::FormFu'}->{constructor}->{config_file_path}},
+            $module_dir . '/root/forms';
+    }
+    catch {
+        $app->log->debug("No module_dir for $real_module, defined on $class");
+    };
 };
 
 =head2 flag_callback_error

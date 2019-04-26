@@ -3,7 +3,6 @@ package OpusVL::FB11::FormFu::Action::FB11FormFu;
 use Moose;
 use namespace::autoclean;
 use MRO::Compat; 
-use File::ShareDir;
 use List::MoreUtils qw/uniq/;
 
 extends 'Catalyst::Action';
@@ -22,19 +21,13 @@ sub execute
     die("Failed to pull form from controller. Ensure your Controller 'extends' Catalyst::Controller::HTML::FormFu")
         unless $controller->can('form');
     my $form = $controller->form;
-    
+
     # Configure the form to generate IDs automatically
     $form->auto_id("formfield_%n_%r_%c");
     # The action attribute should point the path of the config file...
     my $config_file = $self->attributes->{FB11Form}->[0];
 
-    unless ( $controller->fb11_myclass )
-    {
-        die("Failed to load FB11Form.. no fb11_myclass specified for $controller ");
-    }
-
-    # build the start of config file path..
-    my $path = File::ShareDir::module_dir( $controller->fb11_myclass ) . '/root/forms/';
+    my $path = '';
     # ... build the rest of the path..
     if ( defined $config_file )
     {
@@ -45,66 +38,52 @@ sub execute
         $path .= $self->reverse . '.yml';
     }
 
-    $c->log->debug("FB11Form Loading config: $path \n" ) if $c->debug;
+    $c->log->debug("FB11Form Loading config: $path \n" );
 
-    # .. now get the full path...
-    my $form_file = File::Spec->rel2abs( $path );
-
-    if ( -r $form_file )
+    $self->load_config_file( $c, $form, $path );
+    my $new_formfu = $form->can('auto_container_comment_class');
+    $form->auto_container_error_class('has-error');
+    if($c->config->{old_formfu_classes})
     {
-        # .. load it..
-        $self->load_config_file ( $c, $form, $form_file );
-        my $new_formfu = $form->can('auto_container_comment_class');
-        $form->auto_container_error_class('has-error');
-        if($c->config->{old_formfu_classes})
-        {
-            # I can't really see why you'd need this in our new Bootstrap'd world...
-            $form->auto_container_class('%t');
-            $form->auto_container_label_class('label');
-            $form->auto_container_comment_class('comment');
-            $form->auto_comment_class('comment');
-            $form->auto_container_error_class('error');
-            $form->auto_container_per_error_class('error_%s_%t');
-            $form->auto_error_class('error_message error_%s_%t');
+        # I can't really see why you'd need this in our new Bootstrap'd world...
+        $form->auto_container_class('%t');
+        $form->auto_container_label_class('label');
+        $form->auto_container_comment_class('comment');
+        $form->auto_comment_class('comment');
+        $form->auto_container_error_class('error');
+        $form->auto_container_per_error_class('error_%s_%t');
+        $form->auto_error_class('error_message error_%s_%t');
+    }
+
+    my $previous_indicator = $form->indicator;
+    $form->indicator(sub 
+    {
+        my $self = shift;
+        my $query = shift;
+        if(uc $form->method eq 'POST') {
+            unless(uc $c->req->method eq 'POST')
+            {
+                # check form is a post, if not return false.
+                return 0;
+            }
         }
-    
-        my $previous_indicator = $form->indicator;
-        $form->indicator(sub 
+        if($previous_indicator) 
         {
-            my $self = shift;
-            my $query = shift;
-            if(uc $form->method eq 'POST') {
-                unless(uc $c->req->method eq 'POST')
-                {
-                    # check form is a post, if not return false.
-                    return 0;
-                }
-            }
-            if($previous_indicator) 
-            {
-                return $query->param($previous_indicator);
-            }
-            else
-            {
-                my @names = uniq grep {defined} map { $_->nested_name } @{ $self->get_fields };
-                return grep { defined $query->param($_) } @names;
-            }
-        });
+            return $query->param($previous_indicator);
+        }
+        else
+        {
+            my @names = uniq grep {defined} map { $_->nested_name } @{ $self->get_fields };
+            return grep { defined $query->param($_) } @names;
+        }
+    });
 
-        $self->process( $form );
-        
-        # .. stash it..
-        $c->stash->{ 'form' } = $form;
-    }
-    else
-    {
-        die("Could not find form config: $form_file ");
-    }
+    $self->process( $form );
 
-    # call the next 'excute'...
-    my $r = $self->next::method(@_);
+    # .. stash it..
+    $c->stash->{form} = $form;
 
-    return $r;
+    $self->next::method(@_);
 }
 
 sub load_config_file

@@ -2,6 +2,11 @@ Changes for OpusVL-FB11-FormFu
 
 {{ $NEXT }}
 
+0.04      2019-04-26 14:43:47+01:00 Europe/London
+
+  - The controller's module_dir is now added to the FormFu search paths,
+    allowing them to see one another.
+
 0.03      2018-06-13 15:37:34+01:00 Europe/London
 
   - I found a constraint called AppKitPassword and apparently we need it
